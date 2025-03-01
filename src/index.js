@@ -3,8 +3,9 @@
 // import { DB_NAME } from "./constants";
 
 
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 import connectDB from "./db/index.js";
+import {app} from "./app.js";
 
 
 dotenv.config({
@@ -20,7 +21,7 @@ connectDB().then(()=>{
     })
 
     app.listen(port, ()=>{
-        console.log(`Server is running at port: ${port}`)
+        console.log(`⚙️Server is running at port: ${port}`)
     })
     
 }).then().catch((err)=>{
