@@ -4,7 +4,6 @@ import {User} from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import { appendXML } from "pdfkit";
 
 // new access and refresh token generate
 const generateAccessAndRefreshToken= async(userId)=>{
