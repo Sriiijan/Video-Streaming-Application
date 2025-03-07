@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { Subscription } from "../models/subscription.models.js";
 
 // new access and refresh token generate
 const generateAccessAndRefreshToken= async(userId)=>{
@@ -25,7 +26,7 @@ const generateAccessAndRefreshToken= async(userId)=>{
     }
 }
 
-// new user registration
+// new user registration: 200 OK
 const registerUser= asyncHandler(async (req, res)=>{
     // get user details from frontend
     // validation- not empty
@@ -98,7 +99,7 @@ const registerUser= asyncHandler(async (req, res)=>{
 
 })
 
-// log in
+// log in: 200 OK
 const loginUser= asyncHandler(async(req, res)=>{
     // req body->data
     // usernaeme or email
@@ -147,13 +148,13 @@ const loginUser= asyncHandler(async(req, res)=>{
     )
 })
 
-// log out
+// log out: 200 OK
 const logoutUser= asyncHandler(async(req, res)=>{
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1 // this remove the field from the document
             }
         },
         {
@@ -207,7 +208,7 @@ const refreshAccessToken= asyncHandler(async(req, res)=>{
     }
 })
 
-// change passsword
+// change passsword: 200 OK
 const changeCurrentPassword= asyncHandler(async(req, res)=> {
     const {oldPassword, newPassword}= req.body
 
@@ -233,12 +234,12 @@ const changeCurrentPassword= asyncHandler(async(req, res)=> {
     return res.status(200).json(new ApiResponse(200, {}, "password changed successfully"))
 })
 
-// get current user
+// get current user:200 OK
 const getCurrentUser= asyncHandler(async(req, res)=>{
     return res.status(200).json(new ApiResponse(200, req.user, "Current user fetched successfully"))
 })
 
-// update account details
+// update account details:200 OK
 const updateAccountDetails= asyncHandler(async(req, res)=>{
     const {fullName, email}= req.body
 
@@ -262,11 +263,11 @@ const updateAccountDetails= asyncHandler(async(req, res)=>{
     )
 })
 
-// update avatar
+// update avatar:200 OK
 const updateUserAvatar= asyncHandler(async(req,res)=>{
     const avatarLocalPath= req.file?.path
 
-    if(!avatarLocal){
+    if(!avatarLocalPath){
         throw new ApiError(400, "Avatar is missing")
     }
 
@@ -289,11 +290,11 @@ const updateUserAvatar= asyncHandler(async(req,res)=>{
 
 })
 
-// update cover image
+// update cover image:200 OK
 const updateUsercoverImage= asyncHandler(async(req,res)=>{
     const coverImageLocalPath= req.file?.path
 
-    if(!avatarLocal){
+    if(!coverImageLocalPath){
         throw new ApiError(400, "cover image missing")
     }
 
@@ -316,15 +317,16 @@ const updateUsercoverImage= asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponse(200, user, "Cover image updated successfully"))
 })
 
-// to get user profile info
+// to get user profile info:200 OK
 const getUserChannelProfile= asyncHandler(async(req, res)=>{
     const {username}= req.params
 
     if(!username?.trim()){
         throw new ApiError(400, "Username is missing")
     }
+    console.log("Searching for username:", username);
 
-    User.aggregate(
+    const channel= await User.aggregate(
         [
             {
                 $match:{
@@ -353,7 +355,7 @@ const getUserChannelProfile= asyncHandler(async(req, res)=>{
                         $size: "$subscribers"
                     },
                     channelSubscribedCount:{
-                        $size: "subscribedTo"
+                        $size: "$subscribedTo"
                     },
                     isSubscribed:{
                         $cond:{
@@ -378,6 +380,8 @@ const getUserChannelProfile= asyncHandler(async(req, res)=>{
             }
         ]
     )
+    console.log("Searching for username:", channel);
+
 
     if(!channel?.length){ // channel doesn't exist
         throw new ApiError(404, "channel doesn't exixt")
