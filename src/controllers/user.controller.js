@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { Subscription } from "../models/subscription.models.js";
 
-// new access and refresh token generate
+// new access and refresh token generate: 200 OK
 const generateAccessAndRefreshToken= async(userId)=>{
     try{
         const user= await User.findById(userId)
@@ -171,7 +171,7 @@ const logoutUser= asyncHandler(async(req, res)=>{
     )
 })
 
-// genarate refresh token
+// genarate refresh token: 200 OK
 const refreshAccessToken= asyncHandler(async(req, res)=>{
     const incomingRefreshToken= req.cookies.refreshToken || req.body.refreshToken
     if(!incomingRefreshToken){
@@ -181,7 +181,7 @@ const refreshAccessToken= asyncHandler(async(req, res)=>{
     try {
         const decodedToken= jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
     
-        const user= User.findById(decodedToken?._id)
+        const user= await User.findById(decodedToken?._id)
     
         if(!user){
             throw new ApiError(401, "Invalid refresh token")
@@ -199,9 +199,11 @@ const refreshAccessToken= asyncHandler(async(req, res)=>{
         const {accessToken, newRefreshToken}= await generateAccessAndRefreshToken(user._id)
     
         return res.cookie("accessToken", accessToken, options).cookie("refreshToken", newRefreshToken, options).json(
-            200,
-            {accessToken, refreshToken: newRefreshToken},
-            "Access token refreshed"
+            new ApiResponse(
+                200,
+                {accessToken, refreshToken: newRefreshToken},
+                "Access token refreshed"
+            )
         )
     } catch (error) {
         throw new ApiError(401, error?.message || "invalid refresh token")
@@ -392,7 +394,7 @@ const getUserChannelProfile= asyncHandler(async(req, res)=>{
     )
 })
 
-// to get watch history
+// to get watch history:200 OK
 const getWatchHistory= asyncHandler(async(req, res)=>{
     const user= await User.aggregate(
         [
