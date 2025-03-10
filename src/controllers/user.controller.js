@@ -5,7 +5,6 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { Subscription } from "../models/subscription.models.js";
 
 // new access and refresh token generate: 200 OK
 const generateAccessAndRefreshToken= async(userId)=>{
@@ -55,9 +54,13 @@ const registerUser= asyncHandler(async (req, res)=>{
         throw new ApiError(409, "User with email or username already exist")
     }
 
-    // console.log(req.files)
+    console.log(req.files)
 
-    const avatarLocalPath= req.files?.avatar[0]?.path
+    let avatarLocalPath;
+if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
+    avatarLocalPath = req.files.avatar[0].path;
+}
+
     // const coverImageLocalPath= req.files?.coverImage[0]?.path
 
     let coverImageLocalPath
