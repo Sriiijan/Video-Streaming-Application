@@ -29,4 +29,42 @@ const uploadOnCloudinary= async (localFilePath)=> {
     }
 }
 
-export {uploadOnCloudinary}
+const deleteFromCloudinary= async(cloudUrl)=>{
+    try {
+        // extract the public ID from the url
+        const publicId= cloudUrl.split("/").pop().split(".")[0]
+    
+        // delete the file using public Id
+        const result= await cloudinary.uploader.destroy(publicId)
+        
+        console.log("Deleted: ", result)
+        return result
+    } catch (error) {
+        console.error("Error deleting file: ", error)
+    }
+}
+
+const deleteVideoFromCloudinary= async(cloudUrl)=>{
+    try {
+        // extract the public ID from the url
+        const urlParts= cloudUrl.split("/")
+        const publicIdWithExtension= urlParts[urlParts.lemgth - 1]
+        const publicId= publicIdWithExtension.split(".")[0]
+
+        // delete the file using public Id
+        const result= await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video"
+        })
+        
+        console.log("Deleted: ", result)
+        return result
+    } catch (error) {
+        console.error("Error deleting file: ", error)
+    }
+}
+
+export {
+    uploadOnCloudinary,
+    deleteFromCloudinary,
+    deleteVideoFromCloudinary
+}
