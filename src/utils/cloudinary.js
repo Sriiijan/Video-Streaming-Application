@@ -48,7 +48,7 @@ const deleteVideoFromCloudinary= async(cloudUrl)=>{
     try {
         // extract the public ID from the url
         const urlParts= cloudUrl.split("/")
-        const publicIdWithExtension= urlParts[urlParts.lemgth - 1]
+        const publicIdWithExtension= urlParts[urlParts.length - 1]
         const publicId= publicIdWithExtension.split(".")[0]
 
         // delete the file using public Id

@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary, deleteFromCloudinary, deleteVideoFromCloudinary} from "../utils/cloudinary.js";
 
+// get all videos of the user: 200 OK
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
     // TODO: get all videos based on query, sort, pagination
@@ -57,11 +58,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
             },
             // project required details
             {
-                thumbnail: 1,
-                videoFile: 1,
-                title: 1,
-                description: 1,
-                createdBy: 1
+                $project: {
+                    thumbnail: 1,
+                    videoFile: 1,
+                    title: 1,
+                    description: 1,
+                    createdBy: 1
+                }
             },
             // sorting
             {
@@ -79,16 +82,16 @@ const getAllVideos = asyncHandler(async (req, res) => {
         ]
     )
 
-    if(videos.length){
+    if(!videos.length){
         throw new ApiError(404, "Video not found")
     }
 
     return res.status(200).json(
-        new ApiResponse(200, videos[0], "videos fetched successfully")
+        new ApiResponse(200, videos, "videos fetched successfully")
     )
 });
 
-// video upload
+// video upload: 200 OK
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body;
     
@@ -139,7 +142,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     );
 });
 
-// get video by id
+// get video by id: 200 OK  
 const getVideoById= asyncHandler(async(req, res)=>{
     const {videoId}= req.params
     if(!videoId || !isValidObjectId(videoId)){
@@ -155,13 +158,14 @@ const getVideoById= asyncHandler(async(req, res)=>{
     return res.status(200).json(new ApiResponse(200, video, "Video fetched successfully"))
 })
 
+// update video details: 200 OK
 const updateVideo= asyncHandler (async(req, res)=>{
     const {videoId}= req.params
     const {title, description}= req.body
     const newThumbnailLocalPath= req.file?.path
 
-    if(!videoId || isValidObjectId(videoId)){
-        new ApiError(400, "Give a valid video Id")
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(400, "Give a valid video Id")
     }
 
     if(!title || !description){
@@ -172,7 +176,7 @@ const updateVideo= asyncHandler (async(req, res)=>{
         throw new ApiError(400, "Thumbnail is required")
     }
 
-    const video= findById(videoId)
+    const video= await Video.findById(videoId)
 
     if(!video){
         throw new ApiError(404, "Video not found")
@@ -194,7 +198,7 @@ const updateVideo= asyncHandler (async(req, res)=>{
         throw new ApiError(400, "Error whiile uploading new thumbnail")
     }
 
-    const updateVideo= await Video.findByIdAndDelete(
+    const updateVideo= await Video.findByIdAndUpdate(
         videoId,
         {
             $set:{
@@ -206,10 +210,11 @@ const updateVideo= asyncHandler (async(req, res)=>{
         {new: true}
     )
     return res.status(200).json(
-        new ApiResponse(200, "Video details updated")
+        new ApiResponse(200, updateVideo, "Video details updated")
     )
 })
 
+// delete video: 200 OK
 const deleteVideo= asyncHandler(async(req, res)=>{
     const {videoId}= req.params
 
@@ -229,6 +234,8 @@ const deleteVideo= asyncHandler(async(req, res)=>{
 
     const deletedVideoFile= await deleteVideoFromCloudinary(video.videoFile)
 
+    console.log("deletedVideoFile", deletedVideoFile)
+
     if(!deletedVideoFile || deletedVideoFile.result != 'ok'){
         throw new ApiError(500, "Error while deleting video")
     }
@@ -241,7 +248,7 @@ const deleteVideo= asyncHandler(async(req, res)=>{
 
     const deletedVideo= await Video.findByIdAndDelete(videoId)
 
-    if(!deleteVideo){
+    if(!deletedVideo){
         throw new ApiError(500, "Error while deleting video")
     }
 
@@ -287,5 +294,6 @@ export {
     getAllVideos,
     getVideoById,
     updateVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    deleteVideo
 };
