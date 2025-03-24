@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// Toggle like on a video 200: Ok
 const toggleVideoLike= asyncHandler(async(req, res)=>{
     const {videoId}= req.params;
 
@@ -17,9 +18,9 @@ const toggleVideoLike= asyncHandler(async(req, res)=>{
         throw new ApiError(400, "User is missing")
     }
 
-    const existingLike= await Like.findById({
-        video: videoId,
-        likedBy: userId
+    const existingLike= await Like.findOne({
+        video: new mongoose.Types.ObjectId(videoId),
+        likedBy: new mongoose.Types.ObjectId(userId)
     })
 
     let liked
@@ -37,8 +38,8 @@ const toggleVideoLike= asyncHandler(async(req, res)=>{
         //like the video
 
         const likedVideo= await Like.create({
-            video: videoId,
-            likedBy: userId
+            video: new mongoose.Types.ObjectId(videoId),
+            likedBy: new mongoose.Types.ObjectId(userId)
         })
 
         if(!likedVideo){
@@ -48,7 +49,7 @@ const toggleVideoLike= asyncHandler(async(req, res)=>{
     }
 
     const totalLikes= await Like.countDocuments({
-        video: videoId
+        video: new mongoose.Types.ObjectId(videoId)
     })
 
     return res.status(200).json(
@@ -56,6 +57,7 @@ const toggleVideoLike= asyncHandler(async(req, res)=>{
     )
 })
 
+// Toggle like on a comment 200: Ok
 const toggleCommentLike= asyncHandler(async(req, res)=>{
     const {commentId}= req.params
 
@@ -69,8 +71,8 @@ const toggleCommentLike= asyncHandler(async(req, res)=>{
     }
 
     const existingLike= await Like.findOne({
-        comment: commentId,
-        owner: userId
+        comment: new mongoose.Types.ObjectId(commentId),
+        likedBy: new mongoose.Types.ObjectId(userId)
     })
 
     let liked
@@ -87,8 +89,8 @@ const toggleCommentLike= asyncHandler(async(req, res)=>{
     else{
         // like the comment
         const likedComment= await Like.create({
-            comment: commentId,
-            owner: userId
+            comment: new mongoose.Types.ObjectId(commentId),
+            likedBy: new mongoose.Types.ObjectId(userId)
         })
 
         if(!likedComment){
@@ -97,8 +99,8 @@ const toggleCommentLike= asyncHandler(async(req, res)=>{
         liked= true
     }
 
-    const totalLikes= await Like.countDocuments({
-        comment: commentId
+    const totalLikes= await Like.countDocuments({ // problems in counting the likes
+        comment: new mongoose.Types.ObjectId(commentId)
     })
 
     return res.status(200).json(
@@ -153,6 +155,7 @@ const toggleTweetLike= asyncHandler(async(req, res)=>{
     )
 })
 
+// Get all liked videos 200: Ok
 const getLikedVideos= asyncHandler(async(req, res)=>{
     const userId= req.user?._id
 
@@ -166,7 +169,7 @@ const getLikedVideos= asyncHandler(async(req, res)=>{
                 $match: {
                     likedBy: userId,
                     video: {
-                        $exist: true,
+                        $exists: true,
                         $ne: null
                     }
                 }

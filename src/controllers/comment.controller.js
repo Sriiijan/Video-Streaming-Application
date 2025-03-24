@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.models.js";
 
+// Add a comment to a video:200 OK
 const addComment= asyncHandler(async(req, res)=>{
     const {videoId}= req.params
     const {content}= req.body
@@ -40,6 +41,7 @@ const addComment= asyncHandler(async(req, res)=>{
     )
 })
 
+// Update a comment: 200 OK
 const updateComment= asyncHandler(async(req, res)=>{
     const {commentId}= req.params
 
@@ -86,6 +88,7 @@ const updateComment= asyncHandler(async(req, res)=>{
     )
 })
 
+// Delete a comment: 200 OK
 const deleteComment= asyncHandler(async(req, res)=>{
     const {commentId}= req.params
 
@@ -116,10 +119,11 @@ const deleteComment= asyncHandler(async(req, res)=>{
     )
 })
 
+// Get all comments of a video: 200 OK
 const getVideoComments= asyncHandler(async(req, res)=>{
     const {videoId}= req.params
 
-    ConstantSourceNode(page= 1, limit= 10)= req.query
+    const {page= 1, limit= 10}= req.query
 
     if(!videoId || !isValidObjectId(videoId)){
         throw new ApiError(400, "Missing or invalid video ID")
@@ -129,7 +133,7 @@ const getVideoComments= asyncHandler(async(req, res)=>{
         [
             { // match the comments of the video 
                 $match: {
-                    video: mongoose.Types.ObjectId(videoId)
+                    video: new mongoose.Types.ObjectId(videoId)
                 }
             },
             { // popULte the user details to it
@@ -157,11 +161,13 @@ const getVideoComments= asyncHandler(async(req, res)=>{
                 }
             },
             {
-                $unwind: "createdBy"
+                $unwind: "$createdBy"
             },
             { // Projrct the final output
-                content: 1,
-                createdBy: 1
+                $project: {
+                    content: 1,
+                    createdBy: 1
+                }
             },
             { //pagination
                 $skip: (page - 1) * limit

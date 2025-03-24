@@ -256,7 +256,7 @@ const deleteVideo= asyncHandler(async(req, res)=>{
         new ApiResponse(200, {}, "video deleted successfully")
     )
 })
-
+// change publish status of video: 200 OK
 const togglePublishStatus= asyncHandler(async(req, res)=>{
     const {videoId}= req.params
 

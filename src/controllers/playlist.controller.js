@@ -3,7 +3,10 @@ import { Playlist } from "../models/playlist.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.models.js";
+import { Video } from "../models/video.models.js";
 
+// Create a new playlist 200: OK
 const createPlaylist= asyncHandler(async(req, res)=>{
     const {name, description}= req.body
 
@@ -37,7 +40,8 @@ const createPlaylist= asyncHandler(async(req, res)=>{
     )
 })
 
-const getUserPlaylist= asyncHandler(async(req, res)=>{
+// Get all playlists of a user 200: OK
+const getUserPlaylists= asyncHandler(async(req, res)=>{
     const {userId}= req.params
 
     if(!userId || !isValidObjectId(userId)){
@@ -48,7 +52,7 @@ const getUserPlaylist= asyncHandler(async(req, res)=>{
         [
             {
                 $match: {
-                    owner: mongoose.Types.ObjectId(userId)
+                    createdBy: new mongoose.Types.ObjectId(userId)
                 }
             },
             { // LOOKUP FOR OWNER'S DETAILS
@@ -68,10 +72,10 @@ const getUserPlaylist= asyncHandler(async(req, res)=>{
                     ]
                 }
             },
-            { // converting the btretedBy array to an object
+            { // converting the  array to an object
                 $addFields: {
                     createdBy: {
-                        $first: createdBy
+                        $first: "$createdBy"
                     }
                 }
             },
@@ -80,7 +84,7 @@ const getUserPlaylist= asyncHandler(async(req, res)=>{
                     from: "videos",
                     localField: "videos",
                     foreignField: "_id",
-                    as: "owner",
+                    as: "videos",
                     pipeline: [
                         // further lookup to get the owner details of the video
                         {
@@ -111,10 +115,12 @@ const getUserPlaylist= asyncHandler(async(req, res)=>{
                 }    
             },
             { // Final projection
-                videos: 1,
-                creatdeBY: 1,
-                name: 1,
-                description
+                $project: {
+                    videos: 1,
+                    creatdeBY: 1,
+                    name: 1,
+                    description: 1
+                }
             }
         ]
     )
@@ -128,6 +134,7 @@ const getUserPlaylist= asyncHandler(async(req, res)=>{
     )
 })
 
+// Get a playlist by its ID 200: OK
 const getPlaylistById= asyncHandler(async(req, res)=>{
     const {playlistId}= req.params
 
@@ -139,7 +146,7 @@ const getPlaylistById= asyncHandler(async(req, res)=>{
         [
             {
                 $match: {
-                    _id: mongoose.Types.ObjectId(playlistId)
+                    _id: new mongoose.Types.ObjectId(playlistId)
                 }
             },
             {// lookup for getting owner details
@@ -161,15 +168,15 @@ const getPlaylistById= asyncHandler(async(req, res)=>{
             },
             {
                 $addFields: {
-                    creatdeBY: {
-                        $first: "createdBy"
+                    createdBY: {
+                        $first: "$createdBy"
                     }
                 }
             },
             {// lookup forvideos
                 $lookup: {
                     from: "videos",
-                    localsName: "videos",
+                    localField: "videos",
                     foreignField: "_id",
                     as: "videos",
                     pipeline: [
@@ -232,6 +239,7 @@ const getPlaylistById= asyncHandler(async(req, res)=>{
     )
 })
 
+// Add a video to a playlist 200: OK
 const addVideoToPlaylist= asyncHandler(async(req, res)=>{
     const {playlistId, videoId}= req.params
 
@@ -255,7 +263,7 @@ const addVideoToPlaylist= asyncHandler(async(req, res)=>{
         throw new ApiError(403, "You are not allowed to add video to another's playlist")
     }
 
-    if(!playlist.videos.includes(videoId)){
+    if(playlist.videos.includes(videoId)){
         throw new ApiError(400, "This video already exist in the playlist")
     }
 
@@ -278,6 +286,7 @@ const addVideoToPlaylist= asyncHandler(async(req, res)=>{
     )
 })
 
+// Remove a video from a playlist 200: OK
 const removeVideoFromPlaylist= asyncHandler(async(req, res)=>{
     const {playlistId, videoId}= req.params
 
@@ -324,6 +333,7 @@ const removeVideoFromPlaylist= asyncHandler(async(req, res)=>{
     )
 })
 
+// Delete a playlist 200: OK
 const deletePlaylist= asyncHandler(async(req, res)=>{
     const {playlistId}= req.params
 
@@ -354,6 +364,7 @@ const deletePlaylist= asyncHandler(async(req, res)=>{
     )
 })
 
+// Update a playlist 200: OK
 const updatePlaylist= asyncHandler(async(req, res)=>{
     const {playlistId}= req.params
     if(!playlistId || !isValidObjectId(playlistId)){
@@ -368,7 +379,7 @@ const updatePlaylist= asyncHandler(async(req, res)=>{
 
     const userId= req.user?._id
 
-    const playlist= await Playlist.findById(Playlist)
+    const playlist= await Playlist.findById(playlistId)
 
     if(!playlist){
         throw new ApiError(404, "Playlist not found")
@@ -401,7 +412,7 @@ const updatePlaylist= asyncHandler(async(req, res)=>{
 
 export {
     createPlaylist,
-    getUserPlaylist,
+    getUserPlaylists,
     getPlaylistById,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
