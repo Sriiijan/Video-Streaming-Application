@@ -3,8 +3,6 @@ import { Playlist } from "../models/playlist.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { User } from "../models/user.models.js";
-import { Video } from "../models/video.models.js";
 
 // Create a new playlist 200: OK
 const createPlaylist= asyncHandler(async(req, res)=>{
