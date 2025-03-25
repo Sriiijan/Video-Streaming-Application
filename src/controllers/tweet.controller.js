@@ -1,14 +1,15 @@
 import mongoose, {isValidObjectId} from "mongoose";
-import {Tweet} from "../models/tweet.model.js"
-import {User} from "../models/user.model.js"
+import {Tweet} from "../models/tweet.models.js"
+import {User} from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// create a new tweet 200: Ok
 const createTweet= asyncHandler(async(req, res)=>{
     const userId= req.user?._id
-
-    if(!userId || isValidObjectId(userId)){
+    
+    if(!userId || !isValidObjectId(userId)){
         throw new ApiError(400, "Missing or invalid user Id")
     }
 
@@ -32,16 +33,17 @@ const createTweet= asyncHandler(async(req, res)=>{
     )
 })
 
-const getUsersTweet= asyncHandler(async(req, res)=>{
+// get all tweets of a user 200: Ok
+const getUserTweets= asyncHandler(async(req, res)=>{
     const {userId}= req.params
 
-    if(!userId || isValidObjectId(userId)){
+    if(!userId || !isValidObjectId(userId)){
         throw new ApiError(400, "Missing or invalid user Id")
     }
 
     const {page= 1, limit= 10}= req.query
 
-    const tweets= Tweet.aggregate(
+    const tweets= await Tweet.aggregate(
         [
             {
                 $match: {
@@ -57,7 +59,7 @@ const getUsersTweet= asyncHandler(async(req, res)=>{
                 $lookup: {
                     from: "users",
                     localField: "owner",
-                    foreignFiled: "_id",
+                    foreignField: "_id",
                     as: "owner",
                     pipeline: [
                         {
@@ -88,7 +90,7 @@ const getUsersTweet= asyncHandler(async(req, res)=>{
                 $skip: (page - 1) * limit
             },
             {
-                $limit: paeseInt(limit)
+                $limit: parseInt(limit)
             }
         ]
     )
@@ -102,6 +104,7 @@ const getUsersTweet= asyncHandler(async(req, res)=>{
     )
 })
 
+// update a tweet 200: Ok
 const updateTweet= asyncHandler(async(req, res)=>{
     const {tweetId}= req.params
     
@@ -127,7 +130,7 @@ const updateTweet= asyncHandler(async(req, res)=>{
         throw new ApiError(403, "You are not allowed to update another's tweet")
     }
 
-    const updateTweet= await Tweet.findByIdAndUpdate(
+    const updatedTweet= await Tweet.findByIdAndUpdate(
         tweetId,
         {
             $set: {
@@ -137,15 +140,16 @@ const updateTweet= asyncHandler(async(req, res)=>{
         {new: true}
     )
 
-    if(!updateTweet){
-        throw new ApiError(201, "Failed to update the tweet")
+    if(!updatedTweet){
+        throw new ApiError(400, "Failed to update the tweet")
     }
 
     return res.status(200).json(
-        new ApiResponse(200, updateTweet, "Tweet updated successfully")
+        new ApiResponse(200, updatedTweet, "Tweet updated successfully")
     )
 })
 
+// delete a tweet 200: Ok
 const deleteTweet= asyncHandler(async(req, res)=>{
     const {tweetId}= req.params
 
@@ -178,7 +182,7 @@ const deleteTweet= asyncHandler(async(req, res)=>{
 
 export{
     createTweet,
-    getUsersTweet,
+    getUserTweets,
     updateTweet,
     deleteTweet
 }
