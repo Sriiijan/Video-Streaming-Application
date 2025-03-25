@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// get channel stats 200: OK
 const getChannelStats= asyncHandler(async(req, res)=>{
     const userId= req.user?._id
 
@@ -47,7 +48,7 @@ const getChannelStats= asyncHandler(async(req, res)=>{
             {
                 $group: {
                     _id: null,
-                    totalSuscribers: {
+                    totalSubscribers: {
                         $sum: 1
                     }
                 }
@@ -55,7 +56,7 @@ const getChannelStats= asyncHandler(async(req, res)=>{
             {
                 $project: {
                     _id: 0,
-                    totalSuscribers: 1
+                    totalSubscribers: 1
                 }
             }
         ]
@@ -93,26 +94,27 @@ const getChannelStats= asyncHandler(async(req, res)=>{
         ]
     )
 
-    const info= {
-        totalViews: videoCount[0].totalViews ? videoCount[0].totalViews : 0,
-        totalVideos: videoCount[0].totalVideos ? videoCount[0].totalVideos : 0,
-        totalSuscribers: subscriberCount[0].totalSuscribers ? subscriberCount[0].totalSuscribers : 0,
-        totalLikes: likeCount[0].totalLikes ? likeCount[0].totalLikes : 0
-
-    }
+    const info = {
+        totalViews: videoCount[0]?.totalViews || 0,
+        totalVideos: videoCount[0]?.totalVideos || 0,
+        totalSubscribers: subscriberCount[0]?.totalSubscribers || 0,
+        totalLikes: likeCount[0]?.totalLikes || 0
+    };
+    
 
     return res.status(200).json(
         new ApiResponse(200, info, "Channel status fetched successfully")
     )
 })
 
+// get channel videos 200: OK
 const getChannelVideos= asyncHandler(async(req, res)=>{
     const userId= req.user?._id
     const videos= await Video.aggregate(
         [
             {
                 $match: {
-                    owner: new mongoose.Types(userId)
+                    owner: new mongoose.Types.ObjectId(userId)
                 }
             },
             {
@@ -134,7 +136,7 @@ const getChannelVideos= asyncHandler(async(req, res)=>{
         throw new ApiError(400, "Failed to fetch the videos")
     }
 
-    return res.status(200),json(
+    return res.status(200).json(
         new ApiResponse(200, videos[0] ? videos[0] : 0, "Channel's videos feedbeck fetched successfully")
     )
 })

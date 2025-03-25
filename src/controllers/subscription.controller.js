@@ -1,11 +1,10 @@
 import mongoose, {isValidObjectId} from "mongoose";
-import { User } from "../models/user.models.js";
-import {Subscription} from "../models/subscription.model.js"
+import {Subscription} from "../models/subscription.models.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { application } from "express";
 
+// Subscribe or unsubscribe a channel 200: OK
 const toggleSubscription= asyncHandler(async(req, res)=>{
     const {channelId}= req.params
 
@@ -54,7 +53,8 @@ const toggleSubscription= asyncHandler(async(req, res)=>{
     )
 })
 
-const getUserChannnelSubscribers= asyncHandler(async(req, res)=>{
+// Get all subscribers of a channel 200: OK
+const getUserChannelSubscribers= asyncHandler(async(req, res)=>{
     const {channelId}= req.params
 
     if(!channelId || !isValidObjectId(channelId)){
@@ -67,7 +67,7 @@ const getUserChannnelSubscribers= asyncHandler(async(req, res)=>{
         [
             {
                 $match: {
-                    channel: mongoose.Types.ObjectId(channelId)
+                    channel: new mongoose.Types.ObjectId(channelId)
                 }
             },
             {
@@ -94,7 +94,8 @@ const getUserChannnelSubscribers= asyncHandler(async(req, res)=>{
     )
 })
 
-const getSubscribedChannel= asyncHandler(async(req, res)=>{
+// Get all channels subscribed by a user 200: OK
+const getSubscribedChannels= asyncHandler(async(req, res)=>{
     const {subscriberId}= req.params
 
     if(!subscriberId || !isValidObjectId(subscriberId)){
@@ -104,14 +105,14 @@ const getSubscribedChannel= asyncHandler(async(req, res)=>{
     const userId= req.user?._id
 
     const totalCount= await Subscription.countDocuments({
-        subscriber: mongoose.Types.ObjectId(subscriberId)
+        subscriber: new mongoose.Types.ObjectId(subscriberId)
     })
 
     const subscribedChannels= await Subscription.aggregate(
         [
             {
                 $match: {
-                    subscriber: mongoose.Types.ObjectId(subscriberId)
+                    subscriber: new mongoose.Types.ObjectId(subscriberId)
                 }
             },
             {
@@ -156,5 +157,5 @@ const getSubscribedChannel= asyncHandler(async(req, res)=>{
 })
 
 export{
-    toggleSubscription, getSubscribedChannel, getUserChannnelSubscribers
+    toggleSubscription, getSubscribedChannels, getUserChannelSubscribers
 }
